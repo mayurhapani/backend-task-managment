@@ -72,18 +72,24 @@ const deleteTask = asyncHandler(async (req, res) => {
 });
 
 const updateTask = asyncHandler(async (req, res) => {
-  const { title, description, category } = req.body;
+  const { title, description, category, status, assignTo } = req.body;
   const { _id } = req.params;
 
   // validation error
-  const task = await taskModel.findByIdAndUpdate(_id, {
-    title,
-    description,
-    category,
-  });
+  const task = await taskModel.findByIdAndUpdate(
+    _id,
+    {
+      title,
+      description,
+      category,
+      status,
+      assignTo,
+    },
+    { new: true }
+  );
 
   if (!task) {
-    throw new ApiError(402, "Post not found");
+    throw new ApiError(402, "Task not found");
   } else {
     return res
       .status(200)
@@ -91,19 +97,20 @@ const updateTask = asyncHandler(async (req, res) => {
   }
 });
 
-const completeTask = asyncHandler(async (req, res) => {
+const updateTaskStatus = asyncHandler(async (req, res) => {
   const { _id } = req.params;
+  const { status } = req.body;
 
   // validation error
   const isTask = await taskModel.findById(_id);
   if (!isTask) {
-    throw new ApiError(402, "Post not found");
+    throw new ApiError(402, "Task not found");
   }
 
-  //task update as completed
+  //task update status
   const task = await taskModel.findByIdAndUpdate(
     _id,
-    { isCompleted: !isTask.isCompleted },
+    { status },
     { new: true }
   );
 
@@ -112,24 +119,19 @@ const completeTask = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, task, "Task status updated"));
 });
 
-// const getTasks = asyncHandler(async (req, res) => {
-//   const user = req.user;
-//   let tasks;
-
-//   if (user.role == "admin") {
-//     tasks = await taskModel
-//       .find({})
-//       .populate("createdBy", "name")
-//       .populate("assignTo", "name");
-//   } else {
-//     tasks = await taskModel
-//       .find({ assignTo: req.user._id })
-//       .populate("createdBy", "name")
-//       .populate("assignTo", "name");
-//   }
-
-//   return res.json(new ApiResponse(200, tasks, "Tasks retrieved successfully"));
-// });
+const getTaskById = asyncHandler(async (req, res) => {
+  const { _id } = req.params;
+  
+  const task = await taskModel.findById(_id)
+    .populate("createdBy", "name")
+    .populate("assignTo", "name");
+  
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+  
+  return res.json(new ApiResponse(200, task, "Task retrieved successfully"));
+});
 
 const getTasks = asyncHandler(async (req, res) => {
   const { page = 1, filters = {} } = req.query;
@@ -145,24 +147,12 @@ const getTasks = asyncHandler(async (req, res) => {
     query.status = filters.status;
   }
 
-  const user = req.user;
-  let tasks;
-
-  if (user.role == "admin") {
-    tasks = await taskModel
-      .find(query)
-      .skip(skip)
-      .limit(limit)
-      .populate("createdBy", "name")
-      .populate("assignTo", "name");
-  } else {
-    tasks = await taskModel
-      .find({ ...query, assignTo: req.user._id })
-      .skip(skip)
-      .limit(limit)
-      .populate("createdBy", "name")
-      .populate("assignTo", "name");
-  }
+  const tasks = await taskModel
+    .find(query)
+    .skip(skip)
+    .limit(limit)
+    .populate("createdBy", "name")
+    .populate("assignTo", "name");
 
   return res.json(new ApiResponse(200, tasks, "Tasks retrieved successfully"));
 });
@@ -250,7 +240,8 @@ export {
   deleteTask,
   updateTask,
   getTasks,
-  completeTask,
+  updateTaskStatus,
+  getTaskById,
   importTasks,
   exportTasks,
 };

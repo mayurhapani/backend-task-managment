@@ -24,9 +24,10 @@ const taskSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    isCompleted: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["Not Started", "In Process", "Completed"],
+      default: "Not Started",
     },
   },
   { timestamps: true }
