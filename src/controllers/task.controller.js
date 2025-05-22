@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const addTask = asyncHandler(async (req, res) => {
-  const { title, description, category, assignTo, dueDate } = req.body;
+  const { title, description, category, status, assignTo, dueDate } = req.body;
   const userId = req.user._id;
 
   //validation error
@@ -29,6 +29,7 @@ const addTask = asyncHandler(async (req, res) => {
     title,
     description,
     category,
+    status,
     createdBy: userId,
     dueDate,
     assignTo,
