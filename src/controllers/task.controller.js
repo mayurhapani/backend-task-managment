@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const addTask = asyncHandler(async (req, res) => {
-  const { title, description, category, assignTo } = req.body;
+  const { title, description, category, assignTo, dueDate } = req.body;
   const userId = req.user._id;
 
   //validation error
@@ -30,6 +30,7 @@ const addTask = asyncHandler(async (req, res) => {
     description,
     category,
     createdBy: userId,
+    dueDate,
     assignTo,
   });
 
@@ -72,7 +73,7 @@ const deleteTask = asyncHandler(async (req, res) => {
 });
 
 const updateTask = asyncHandler(async (req, res) => {
-  const { title, description, category, status, assignTo } = req.body;
+  const { title, description, category, status, assignTo, dueDate } = req.body;
   const { _id } = req.params;
 
   // validation error
@@ -83,6 +84,7 @@ const updateTask = asyncHandler(async (req, res) => {
       description,
       category,
       status,
+      dueDate,
       assignTo,
     },
     { new: true }
@@ -134,9 +136,7 @@ const getTaskById = asyncHandler(async (req, res) => {
 });
 
 const getTasks = asyncHandler(async (req, res) => {
-  const { page = 1, filters = {} } = req.query;
-  const limit = 10;
-  const skip = (page - 1) * limit;
+  const {  filters = {} } = req.query;
   let query = {};
 
   if (filters.priority) {
@@ -149,8 +149,6 @@ const getTasks = asyncHandler(async (req, res) => {
 
   const tasks = await taskModel
     .find(query)
-    .skip(skip)
-    .limit(limit)
     .populate("createdBy", "name")
     .populate("assignTo", "name");
 
@@ -187,6 +185,7 @@ const importTasks = asyncHandler(async (req, res) => {
           isCompleted,
           createdBy: createdByUser._id, // Replace name with ObjectId
           assignTo: assignToUser._id, // Replace name with ObjectId
+          dueDate: task.dueDate ? new Date(task.dueDate) : null, // Ensure date is valid
           createdAt: new Date(task.createdAt), // Ensure date is valid
           updatedAt: new Date(task.updatedAt), // Ensure date is valid
         };
@@ -223,6 +222,7 @@ const exportTasks = asyncHandler(async (req, res) => {
       createdBy: task.createdBy.name,
       assignTo: task.assignTo.name,
       isCompleted: task.isCompleted,
+      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
       createdAt: task.createdAt.toISOString(),
       updatedAt: task.updatedAt.toISOString(),
     };
@@ -245,3 +245,4 @@ export {
   importTasks,
   exportTasks,
 };
+

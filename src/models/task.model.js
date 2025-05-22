@@ -29,6 +29,10 @@ const taskSchema = new Schema(
       enum: ["Not Started", "In Process", "Completed"],
       default: "Not Started",
     },
+    dueDate: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
